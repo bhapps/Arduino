@@ -2,20 +2,6 @@
 
 Arduino HC05 Bluetooth Device
 
-# To be Done
-
-* Add doc links to methods etc
-
-# Built Using
-
-* Sketch
-
-# How to Use
-
-# Functions
-
-# Libraries
-
 # Licences
 
 * The Unlicense
