@@ -71,23 +71,39 @@ boolean startUpState = false;
 int startUpStateCheckCount = 0;
 
 //powerLEDPin
-const int powerLEDPin = 9;
+const int powerLEDPin = 10;
 boolean powerLEDState = false;
 int powerLEDBrightness = 0;
 int powerLEDFadeAmount = 5;
 int powerLEDMaxBrightness = 255;
 
-//connectionLEDPin
-const int connectionLEDPin = 11;
-boolean connectionLEDState = false;
-int connectionLEDBrightness = 0;
-int connectionLEDFadeAmount = 5;
-int connectionLEDMaxBrightness = 50;
-byte connectionLEDFlickerArray[] = {180, 30, 89, 23, 255, 200, 90, 150, 60, 230, 180, 45, 90};
-boolean connectionLEDActivityState = false;
+//errorLEDPin
+const int errorLEDPin = 9;
+boolean errorLEDState = false;
+int errorLEDBrightness = 0;
+int errorLEDFadeAmount = 5;
+int errorLEDMaxBrightness = 255;
+
+//receiveInboundLEDPin
+const int receiveInboundLEDPin = 11;
+boolean receiveInboundLEDState = false;
+int receiveInboundLEDBrightness = 0;
+int receiveInboundLEDFadeAmount = 5;
+int receiveInboundLEDMaxBrightness = 50;
+byte receiveInboundLEDFlickerArray[] = {180, 30, 89, 23, 255, 200, 90, 150, 60, 230, 180, 45, 90};
+boolean receiveInboundLEDActivityState = false;
+
+//sendOutboundLEDPin
+const int sendOutboundLEDPin = 12;
+boolean sendOutboundLEDState = false;
+int sendOutboundLEDBrightness = 0;
+int sendOutboundLEDFadeAmount = 5;
+int sendOutboundLEDMaxBrightness = 50;
+byte sendOutboundLEDFlickerArray[] = {180, 30, 89, 23, 255, 200, 90, 150, 60, 230, 180, 45, 90};
+boolean sendOutboundLEDActivityState = false;
 
 //activityLEDPin
-const int activityLEDPin = 10;
+const int activityLEDPin = 13;
 boolean activityLEDState = false;
 int activityLEDBrightness = 0;
 int activityLEDFadeAmount = 5;
@@ -111,7 +127,9 @@ void setup() {
   //servoMotor.write(servoMotorPinCurrentAngle);
   pinMode(LED_BUILTIN, OUTPUT);
   pinMode(powerLEDPin, OUTPUT);
-  pinMode(connectionLEDPin, OUTPUT);
+  pinMode(errorLEDPin, OUTPUT);
+  pinMode(receiveInboundLEDPin, OUTPUT);
+  pinMode(sendOutboundLEDPin, OUTPUT);
   pinMode(activityLEDPin, OUTPUT);  
 }
 
@@ -140,21 +158,27 @@ void loop() {
 }
 
 void enterErrorMode() {
-  analogWrite(connectionLEDPin, LOW);
+  
+  analogWrite(powerLEDPin, LOW);
+  analogWrite(receiveInboundLEDPin, LOW);
+  analogWrite(sendOutboundLEDPin, LOW);
   analogWrite(activityLEDPin, LOW);
-  analogWrite(powerLEDPin, HIGH);
+ 
+  analogWrite(errorLEDPin, HIGH);
   delay(quickDelay);
-  analogWrite(powerLEDPin, LOW);
+  analogWrite(errorLEDPin, LOW);
   delay(quickDelay);
-  analogWrite(powerLEDPin, HIGH);
+  analogWrite(errorLEDPin, HIGH);
   delay(quickDelay);
-  analogWrite(powerLEDPin, LOW);
+  analogWrite(errorLEDPin, LOW);
 }
 
 void checkStatesAtStartUp() {
   
   setPowerLEDOn(true);
-  setConnectionLEDOn(true);
+  setErrorLEDOn(true);
+  setReceiveInboundLEDOn(true);
+  setSendOutboundLEDOn(true);
   setActivityLEDOn(true);
   delay(quickDelay);
   
@@ -164,9 +188,19 @@ void checkStatesAtStartUp() {
     analogWrite(powerLEDPin, HIGH);
   }
 
-  if(!connectionLEDState){
-    connectionLEDState = true;
-    setConnectionLEDOn(false);
+  if(!errorLEDState){
+    errorLEDState = true;
+    setErrorLEDOn(false);
+  }
+
+  if(!receiveInboundLEDState){
+    receiveInboundLEDState = true;
+    setReceiveInboundLEDOn(false);
+  }
+
+  if(!sendOutboundLEDState){
+    sendOutboundLEDState = true;
+    setSendOutboundLEDOn(false);
   }
 
   if(!activityLEDState){
@@ -174,7 +208,7 @@ void checkStatesAtStartUp() {
     setActivityLEDOn(false);
   }
 
-  if(powerLEDState && connectionLEDState && activityLEDState){
+  if(powerLEDState && errorLEDState && receiveInboundLEDState && sendOutboundLEDState && activityLEDState){
     startUpState = true;
   }
 }
@@ -264,9 +298,9 @@ void processBluetooth() {
 
     if(incomingBluetoothModuleHC05Data.length() > 0){
       if(String(incomingBluetoothModuleHC05Data) == incomingBluetoothModuleHC05LEDOn) {
-        setConnectionLEDOn(true);
+        setReceiveInboundLEDOn(true);
       }else if(String(incomingBluetoothModuleHC05Data) == incomingBluetoothModuleHC05LEDOff) {
-        setConnectionLEDOn(false);
+        setReceiveInboundLEDOn(false);
       }else if(String(incomingBluetoothModuleHC05Data) == incomingBluetoothModuleHC05ConnectedToDevice) {
         setActivityLEDOn(true);
       }else if(String(incomingBluetoothModuleHC05Data) == incomingBluetoothModuleHC05DisconnectedFromDevice) {
@@ -289,6 +323,7 @@ void processSendingDataEvery5SecondToConnectedDevice() {
   }
 }
 
+//PowerLED
 void setPowerLEDOn(boolean turnOn) {
     if(turnOn){
       digitalWrite(powerLEDPin, HIGH);
@@ -314,41 +349,109 @@ void resetPowerLED() {
     delay(fastestDelay);
     digitalWrite(powerLEDPin, HIGH);
 }
+//PowerLED
 
-void doConnectionLEDProcessing() {
-    if(!connectionLEDActivityState) {
-      connectionLEDActivityState = true;
+//ErrorLED
+void setErrorLEDOn(boolean turnOn) {
+    if(turnOn){
+      digitalWrite(errorLEDPin, HIGH);
+    }else{
+      digitalWrite(errorLEDPin, LOW);
+    }
+}
+
+void doErrorLEDProcessing() {
+    analogWrite(errorLEDPin, errorLEDBrightness);
+    errorLEDBrightness = errorLEDBrightness + errorLEDFadeAmount;
+    if (errorLEDBrightness <= 0 || errorLEDBrightness >= errorLEDMaxBrightness) {
+      errorLEDFadeAmount = -errorLEDFadeAmount;
+    }
+}
+
+void setErrorLEDBrightness(int _errorLEDBrightness) {
+    analogWrite(errorLEDPin, _errorLEDBrightness);
+}
+
+void resetErrorLED() {
+    digitalWrite(errorLEDPin, LOW);
+    delay(fastestDelay);
+    digitalWrite(errorLEDPin, HIGH);
+}
+//ErrorLED
+
+//ReceiveInboundLED
+void doReceiveInboundLEDProcessing() {
+    if(!receiveInboundLEDActivityState) {
+      receiveInboundLEDActivityState = true;
       interrupts();
       int randNumber = random(10, 12);
-      for(int connectionLEDFlickerArrayIndex=0; connectionLEDFlickerArrayIndex,randNumber; connectionLEDFlickerArrayIndex++)
+      for(int receiveInboundLEDFlickerArrayIndex=0; receiveInboundLEDFlickerArrayIndex,randNumber; receiveInboundLEDFlickerArrayIndex++)
       {
-        analogWrite(connectionLEDPin, connectionLEDFlickerArray[connectionLEDFlickerArrayIndex]);
+        analogWrite(receiveInboundLEDPin, receiveInboundLEDFlickerArray[receiveInboundLEDFlickerArrayIndex]);
         delay(fastestDelay);
       }
-      setConnectionLEDOn(false);
+      setReceiveInboundLEDOn(false);
       delay(smallDelay);
-      connectionLEDActivityState = false;     
+      receiveInboundLEDActivityState = false;     
     }
 }
 
-void setConnectionLEDBrightness(int _connectionLEDBrightness) {
-    analogWrite(connectionLEDPin, _connectionLEDBrightness);
+void setReceiveInboundLEDBrightness(int _receiveInboundLEDBrightness) {
+    analogWrite(receiveInboundLEDPin, _receiveInboundLEDBrightness);
 }
 
-void setConnectionLEDOn(boolean turnOn) {
+void setReceiveInboundLEDOn(boolean turnOn) {
     if(turnOn){
-      digitalWrite(connectionLEDPin, HIGH);
+      digitalWrite(receiveInboundLEDPin, HIGH);
     }else{
-      digitalWrite(connectionLEDPin, LOW);
+      digitalWrite(receiveInboundLEDPin, LOW);
     }
 }
 
-void resetConnectionLED() {
-    digitalWrite(connectionLEDPin, LOW);
+void resetReceiveInboundLED() {
+    digitalWrite(receiveInboundLEDPin, LOW);
     delay(fastestDelay);
-    digitalWrite(connectionLEDPin, HIGH);
+    digitalWrite(receiveInboundLEDPin, HIGH);
+}
+//ReceiveInboundLED
+
+//sendOutboundLED
+void doSendOutboundLEDProcessing() {
+    if(!sendOutboundLEDActivityState) {
+      sendOutboundLEDActivityState = true;
+      interrupts();
+      int randNumber = random(10, 12);
+      for(int sendOutboundLEDFlickerArrayIndex=0; sendOutboundLEDFlickerArrayIndex,randNumber; sendOutboundLEDFlickerArrayIndex++)
+      {
+        analogWrite(sendOutboundLEDPin, sendOutboundLEDFlickerArray[sendOutboundLEDFlickerArrayIndex]);
+        delay(fastestDelay);
+      }
+      setSendOutboundLEDOn(false);
+      delay(smallDelay);
+      sendOutboundLEDActivityState = false;     
+    }
 }
 
+void setSendOutboundLEDBrightness(int _sendOutboundLEDBrightness) {
+    analogWrite(sendOutboundLEDPin, _sendOutboundLEDBrightness);
+}
+
+void setSendOutboundLEDOn(boolean turnOn) {
+    if(turnOn){
+      digitalWrite(sendOutboundLEDPin, HIGH);
+    }else{
+      digitalWrite(sendOutboundLEDPin, LOW);
+    }
+}
+
+void resetSendOutboundLED() {
+    digitalWrite(sendOutboundLEDPin, LOW);
+    delay(fastestDelay);
+    digitalWrite(sendOutboundLEDPin, HIGH);
+}
+//sendOutboundLED
+
+//ActivityLED
 void doActivityLEDProcessing() {
     if(!activityLEDActivityState) {
       activityLEDActivityState = true;
@@ -381,7 +484,9 @@ void resetActivityLED() {
     delay(fastestDelay);
     digitalWrite(activityLEDPin, HIGH);
 }
+//ActivityLED
 
+//ServoMotor
 void rotateServoMotorAngle() {
     // scan from 0 to 180 degrees
     for(servoMotorPinCurrentAngle = 10; servoMotorPinCurrentAngle < 180; servoMotorPinCurrentAngle++)  
@@ -396,3 +501,4 @@ void rotateServoMotorAngle() {
       delay(minimumDelay);       
     } 
 }
+//ServoMotor
