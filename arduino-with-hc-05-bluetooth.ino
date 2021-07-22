@@ -70,19 +70,19 @@ boolean deviceHasErrorsAndNeedsResart = false;
 boolean startUpState = false;
 int startUpStateCheckCount = 0;
 
-//powerLEDPin
-const int powerLEDPin = 10;
-boolean powerLEDState = false;
-int powerLEDBrightness = 0;
-int powerLEDFadeAmount = 5;
-int powerLEDMaxBrightness = 255;
-
 //errorLEDPin
 const int errorLEDPin = 9;
 boolean errorLEDState = false;
 int errorLEDBrightness = 0;
 int errorLEDFadeAmount = 5;
 int errorLEDMaxBrightness = 255;
+
+//powerLEDPin
+const int powerLEDPin = 10;
+boolean powerLEDState = false;
+int powerLEDBrightness = 0;
+int powerLEDFadeAmount = 5;
+int powerLEDMaxBrightness = 255;
 
 //receiveInboundLEDPin
 const int receiveInboundLEDPin = 11;
